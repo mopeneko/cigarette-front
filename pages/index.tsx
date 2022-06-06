@@ -14,18 +14,19 @@ interface Options {
   chart: Object;
   xaxis: {
     title: Object;
-    categories: string[];
+    categories: any[];
   };
 }
 
 interface Series {
   name: string;
-  data: number[];
+  data: any[];
 }
 
 const Home: NextPage = () => {
-  let [todayCount, setTodayCount] = useState(0);
-  let [average, setAverage] = useState(0);
+  const [todayCount, setTodayCount] = useState(0);
+  const [data, setData] = useState<number[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
 
   const options: Options = {
     chart: {
@@ -35,14 +36,14 @@ const Home: NextPage = () => {
       title: {
         text: "Counts"
       },
-      categories: []
+      categories: categories
     }
   };
   
   const series: Series[] = [
     {
       name: "Count",
-      data: []
+      data: data
     }
   ];
 
@@ -86,6 +87,8 @@ const Home: NextPage = () => {
 
       const todayDate = dayjs().format('YYYY-MM-DD');
       let currentDate = '0000-00-00';
+      setCategories([]);
+      setData([]);
 
       transactions.reverse().map((tx) => {
         const yyyymmdd = tx.timestamp.format('YYYY-MM-DD');
@@ -96,19 +99,23 @@ const Home: NextPage = () => {
 
         if (yyyymmdd !== currentDate) {
           currentDate = yyyymmdd;
-          options.xaxis.categories.push(yyyymmdd);
-          series[0].data.push(0);
+          setCategories((prev) => prev.concat(yyyymmdd));
+          setData((prev) => prev.concat(0));
         }
-        series[0].data[series[0].data.length-1]++;
+        setData((prev) => {
+          prev[prev.length-1]++;
+          return prev;
+        });
       })
-
-      setAverage(
-        series[0].data.reduce(
-          (acc, cur) => acc + cur
-        ) / series[0].data.length
-      );
     })();
   }, []);
+
+  const average = () => {
+    if (data.length === 0) return 0;
+    return data.reduce(
+      (acc, cur) => acc + cur
+    ) / data.length;
+  }
 
   return (
     <>
@@ -124,7 +131,7 @@ const Home: NextPage = () => {
             <h2 className="card-title">Overview</h2>
             <div className="divider"></div>
             <p>今日の本数: {todayCount} 本</p>
-            <p>1日あたりの平均本数: {average} 本</p>
+            <p>1日あたりの平均本数: {average()} 本</p>
           </div>
         </div>
 
