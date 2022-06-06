@@ -87,6 +87,7 @@ const Home: NextPage = () => {
 
       const todayDate = dayjs().format('YYYY-MM-DD');
       let currentDate = '0000-00-00';
+      setTodayCount(0);
       setCategories([]);
       setData([]);
 
