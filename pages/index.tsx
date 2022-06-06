@@ -3,7 +3,7 @@ import type { NextPage } from 'next'
 import dynamic from 'next/dynamic';
 import Link from 'next/link'
 import { useEffect, useState } from 'react';
-import { Address, MosaicId, Order, RepositoryFactoryHttp, TransactionGroup, UInt64 } from 'symbol-sdk';
+import { Address, MosaicId, Order, RepositoryFactoryHttp, TransactionGroup, TransferTransaction } from 'symbol-sdk';
 const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
 interface Transaction {
@@ -51,7 +51,7 @@ const Home: NextPage = () => {
     const transactions: Transaction[] = [];
 
     (async () => {
-      const repositoryFactory = new RepositoryFactoryHttp('http://sym-test-01.opening-line.jp:3000');
+      const repositoryFactory = new RepositoryFactoryHttp('http://01.symbol-blockchain.com:3000');
       const netRepo = repositoryFactory.createNetworkRepository();
       const txRepo = repositoryFactory.createTransactionRepository();
 
@@ -68,8 +68,8 @@ const Home: NextPage = () => {
 
       await txRepo.search({
         group: TransactionGroup.Confirmed,
-        address: Address.createFromRawAddress('TBAZJN2KSBWEGRAPEY573QOM3ATXBNHKFGFZZNQ'),
-        transferMosaicId: new MosaicId('03B346225218484E'),
+        address: Address.createFromRawAddress('NCV7OZVOETWMRX2JTJVEHD5K5SGSJ7FTSPI4UXI'),
+        transferMosaicId: new MosaicId('606F8854012B0C0F'),
         pageSize: 100,
         order: Order.Desc,
       }).forEach((page) => {
@@ -77,6 +77,15 @@ const Home: NextPage = () => {
           if (!data.transactionInfo?.timestamp) {
             throw new Error('failed to get transactionInfo');
           }
+
+          if (!(data instanceof TransferTransaction)) {
+            return;
+          }
+
+          if (data.message.payload !== 'cigarette:smoked') {
+            return;
+          }
+
           transactions.push({
             timestamp: dayjs(
               epockAdjustment * 1000 + data.transactionInfo.timestamp.compact()
