@@ -194,10 +194,6 @@ const Home: NextPage = () => {
 
   return (
     <>
-      <Head>
-        <title>mopeneko-cigarette</title>
-      </Head>
-
       <div className="navbar bg-base-100">
         <Link href="/">
           <a className="btn btn-ghost normal-case text-xl">cigalette</a>
