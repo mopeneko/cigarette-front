@@ -27,8 +27,9 @@ const Home: NextPage = () => {
   const [todayCount, setTodayCount] = useState(0);
   const [data, setData] = useState<number[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
+  const [countPerHour, setCountPerHour] = useState<number[]>([]);
 
-  const options: Options = {
+  const dailyOptions: Options = {
     chart: {
       id: "basic-bar",
     },
@@ -40,10 +41,29 @@ const Home: NextPage = () => {
     }
   };
   
-  const series: Series[] = [
+  const dailySeries: Series[] = [
     {
       name: "Count",
       data: data
+    }
+  ];
+
+  const perHourOptions: Options = {
+    chart: {
+      id: "basic-bar",
+    },
+    xaxis: {
+      title: {
+        text: "Counts per hour"
+      },
+      categories: [...Array(23)].map((_, i) => i + 1)
+    }
+  };
+  
+  const perHourSeries: Series[] = [
+    {
+      name: "Count",
+      data: countPerHour
     }
   ];
 
@@ -99,12 +119,17 @@ const Home: NextPage = () => {
       setTodayCount(0);
       setCategories([]);
       setData([]);
+      setCountPerHour([...Array(23)].map(() => 0));
 
       transactions.reverse().map((tx) => {
         const yyyymmdd = tx.timestamp.format('YYYY-MM-DD');
 
         if (yyyymmdd === todayDate) {
           setTodayCount((prev) => prev + 1);
+          setCountPerHour((prev) => {
+            prev[tx.timestamp.hour()]++;
+            return prev;
+          });
         }
 
         if (yyyymmdd !== currentDate) {
@@ -150,7 +175,8 @@ const Home: NextPage = () => {
             <h2 className="card-title">Graphs</h2>
             <div className="divider"></div>
             <div className="grid xl:grid-cols-2 xl:gap-2">
-              <Chart type="bar" options={options} series={series}></Chart>
+              <Chart type="bar" options={dailyOptions} series={dailySeries}></Chart>
+              <Chart type="bar" options={perHourOptions} series={perHourSeries}></Chart>
             </div>
           </div>
         </div>
