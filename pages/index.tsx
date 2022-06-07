@@ -7,6 +7,7 @@ import { Address, MosaicId, Order, RepositoryFactoryHttp, TransactionGroup, Tran
 const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
 interface Transaction {
+  hash: string;
   timestamp: dayjs.Dayjs;
 }
 
@@ -28,7 +29,7 @@ const Home: NextPage = () => {
   const [data, setData] = useState<number[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [countPerHour, setCountPerHour] = useState<number[]>([]);
-  const [recentTxTimestamp, setRecentTxTimestamp] = useState<dayjs.Dayjs[]>([]);
+  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
 
   const dailyOptions: Options = {
     chart: {
@@ -95,8 +96,16 @@ const Home: NextPage = () => {
         order: Order.Desc,
       }).forEach((page) => {
         page.data.map((data) => {
-          if (!data.transactionInfo?.timestamp) {
+          if (!data.transactionInfo) {
             throw new Error('failed to get transactionInfo');
+          }
+
+          if (!data.transactionInfo.hash) {
+            throw new Error('failed to get hash');
+          }
+
+          if (!data.transactionInfo.timestamp) {
+            throw new Error('failed to get timestamp');
           }
 
           if (!(data instanceof TransferTransaction)) {
@@ -108,6 +117,7 @@ const Home: NextPage = () => {
           }
 
           transactions.push({
+            hash: data.transactionInfo.hash,
             timestamp: dayjs(
               epockAdjustment * 1000 + data.transactionInfo.timestamp.compact()
             )
@@ -145,8 +155,7 @@ const Home: NextPage = () => {
       });
 
       // 直近最大5件のトランザクション
-      const recentTransactions = transactions.slice(Math.min(transactions.length, 5));
-      setRecentTxTimestamp(recentTransactions.map(tx => tx.timestamp));
+      setRecentTransactions(transactions.slice(Math.min(transactions.length, 5)));
     })();
   }, []);
 
@@ -157,8 +166,7 @@ const Home: NextPage = () => {
     ) / data.length;
   }
 
-  const recentTransactions = () => {
-    const formattedTimestamps = recentTxTimestamp.map((d) => d.format('YYYY-MM-DD HH:mm'));
+  const recentTransactionsComponent = () => {
     return (
       <div className="overflow-x-auto">
         <table className="table w-full">
@@ -169,10 +177,11 @@ const Home: NextPage = () => {
           </thead>
 
           <tbody>
-            {formattedTimestamps.map((timestamp) => {
+            {recentTransactions.map((tx) => {
+              const timestamp = tx.timestamp.format('YYYY-MM-DD HH:mm');
               return (
                 <tr>
-                  <th>{timestamp}</th>
+                  <th key={tx.hash}>{timestamp}</th>
                 </tr>
               )
             })}
@@ -215,7 +224,7 @@ const Home: NextPage = () => {
           <div className="card-body">
             <h2 className="card-title">Recent Transactions</h2>
             <div className="divider"></div>
-            {recentTransactions()}
+            {recentTransactionsComponent()}
           </div>
         </div>
       </div>
