@@ -1,5 +1,6 @@
 import dayjs from 'dayjs';
 import type { NextPage } from 'next'
+import { Head } from 'next/document';
 import dynamic from 'next/dynamic';
 import Link from 'next/link'
 import { useEffect, useState } from 'react';
@@ -193,6 +194,10 @@ const Home: NextPage = () => {
 
   return (
     <>
+      <Head>
+        <title>mopeneko-cigarette</title>
+      </Head>
+
       <div className="navbar bg-base-100">
         <Link href="/">
           <a className="btn btn-ghost normal-case text-xl">cigalette</a>
