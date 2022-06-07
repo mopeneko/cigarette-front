@@ -155,7 +155,7 @@ const Home: NextPage = () => {
       });
 
       // 直近最大5件のトランザクション
-      setRecentTransactions(transactions.slice(Math.min(transactions.length, 5)));
+      setRecentTransactions(transactions.slice(0, Math.min(transactions.length, 5)));
     })();
   }, []);
 
