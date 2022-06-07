@@ -28,6 +28,7 @@ const Home: NextPage = () => {
   const [data, setData] = useState<number[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [countPerHour, setCountPerHour] = useState<number[]>([]);
+  const [recentTxTimestamp, setRecentTxTimestamp] = useState<dayjs.Dayjs[]>([]);
 
   const dailyOptions: Options = {
     chart: {
@@ -121,7 +122,7 @@ const Home: NextPage = () => {
       setData([]);
       setCountPerHour([...Array(24)].map(() => 0));
 
-      transactions.reverse().map((tx) => {
+      transactions.map((tx) => {
         const yyyymmdd = tx.timestamp.format('YYYY-MM-DD');
 
         if (yyyymmdd === todayDate) {
@@ -141,7 +142,11 @@ const Home: NextPage = () => {
           prev[prev.length-1]++;
           return prev;
         });
-      })
+      });
+
+      // 直近最大5件のトランザクション
+      const recentTransactions = transactions.slice(Math.min(transactions.length, 5));
+      setRecentTxTimestamp(recentTransactions.map(tx => tx.timestamp));
     })();
   }, []);
 
@@ -150,6 +155,31 @@ const Home: NextPage = () => {
     return data.reduce(
       (acc, cur) => acc + cur
     ) / data.length;
+  }
+
+  const recentTransactions = () => {
+    const formattedTimestamps = recentTxTimestamp.map((d) => d.format('YYYY-MM-DD HH:mm'));
+    return (
+      <div className="overflow-x-auto">
+        <table className="table w-full">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {formattedTimestamps.map((timestamp) => {
+              return (
+                <tr>
+                  <th>{timestamp}</th>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    );
   }
 
   return (
@@ -178,6 +208,14 @@ const Home: NextPage = () => {
               <Chart type="bar" options={dailyOptions} series={dailySeries}></Chart>
               <Chart type="bar" options={perHourOptions} series={perHourSeries}></Chart>
             </div>
+          </div>
+        </div>
+
+        <div className="card bg-base-300 mt-4">
+          <div className="card-body">
+            <h2 className="card-title">Recent Transactions</h2>
+            <div className="divider"></div>
+            {recentTransactions()}
           </div>
         </div>
       </div>
