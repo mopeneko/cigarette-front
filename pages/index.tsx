@@ -56,7 +56,7 @@ const Home: NextPage = () => {
       title: {
         text: "Counts per hour"
       },
-      categories: [...Array(23)].map((_, i) => i + 1)
+      categories: [...Array(24)].map((_, i) => i)
     }
   };
   
@@ -119,7 +119,7 @@ const Home: NextPage = () => {
       setTodayCount(0);
       setCategories([]);
       setData([]);
-      setCountPerHour([...Array(23)].map(() => 0));
+      setCountPerHour([...Array(24)].map(() => 0));
 
       transactions.reverse().map((tx) => {
         const yyyymmdd = tx.timestamp.format('YYYY-MM-DD');
