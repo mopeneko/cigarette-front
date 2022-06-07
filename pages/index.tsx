@@ -1,6 +1,5 @@
 import dayjs from 'dayjs';
 import type { NextPage } from 'next'
-import { Head } from 'next/document';
 import dynamic from 'next/dynamic';
 import Link from 'next/link'
 import { useEffect, useState } from 'react';
