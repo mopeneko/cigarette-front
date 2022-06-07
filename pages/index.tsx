@@ -180,8 +180,8 @@ const Home: NextPage = () => {
             {recentTransactions.map((tx) => {
               const timestamp = tx.timestamp.format('YYYY-MM-DD HH:mm');
               return (
-                <tr>
-                  <th key={tx.hash}>{timestamp}</th>
+                <tr key={tx.hash}>
+                  <th>{timestamp}</th>
                 </tr>
               )
             })}
