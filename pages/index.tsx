@@ -90,7 +90,7 @@ const Home: NextPage = () => {
 
       await txRepo.search({
         group: TransactionGroup.Confirmed,
-        address: Address.createFromRawAddress('NCV7OZVOETWMRX2JTJVEHD5K5SGSJ7FTSPI4UXI'),
+        address: Address.createFromRawAddress('NDHD4RURCULDJ6EXEJ675MS3QHCMTTFTWFG5IDQ'),
         transferMosaicId: new MosaicId('606F8854012B0C0F'),
         pageSize: 100,
         order: Order.Desc,
