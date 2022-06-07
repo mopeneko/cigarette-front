@@ -71,7 +71,7 @@ const Home: NextPage = () => {
     const transactions: Transaction[] = [];
 
     (async () => {
-      const repositoryFactory = new RepositoryFactoryHttp('http://01.symbol-blockchain.com:3000');
+      const repositoryFactory = new RepositoryFactoryHttp('https://01.symbol-blockchain.com:3001');
       const netRepo = repositoryFactory.createNetworkRepository();
       const txRepo = repositoryFactory.createTransactionRepository();
 
