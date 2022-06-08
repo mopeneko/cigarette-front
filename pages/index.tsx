@@ -132,7 +132,9 @@ const Home: NextPage = () => {
       setData([]);
       setCountPerHour([...Array(24)].map(() => 0));
 
-      transactions.reverse().map((tx) => {
+      const reversedTransactions = transactions.reverse();
+
+      reversedTransactions.map((tx) => {
         const yyyymmdd = tx.timestamp.format('YYYY-MM-DD');
 
         if (yyyymmdd === todayDate) {
@@ -155,7 +157,7 @@ const Home: NextPage = () => {
       });
 
       // 直近最大5件のトランザクション
-      setRecentTransactions(transactions.slice(0, Math.min(transactions.length, 5)));
+      setRecentTransactions(reversedTransactions.slice(0, Math.min(transactions.length, 5)));
     })();
   }, []);
 
