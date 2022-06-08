@@ -132,7 +132,7 @@ const Home: NextPage = () => {
       setData([]);
       setCountPerHour([...Array(24)].map(() => 0));
 
-      transactions.map((tx) => {
+      transactions.reverse().map((tx) => {
         const yyyymmdd = tx.timestamp.format('YYYY-MM-DD');
 
         if (yyyymmdd === todayDate) {
