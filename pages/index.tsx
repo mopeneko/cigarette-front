@@ -29,7 +29,7 @@ const Home: NextPage = () => {
   const [data, setData] = useState<number[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [countPerHour, setCountPerHour] = useState<number[]>([]);
-  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
 
   const dailyOptions: Options = {
     chart: {
@@ -125,6 +125,8 @@ const Home: NextPage = () => {
         });
       });
 
+      setTransactions(transactions)
+
       const todayDate = dayjs().format('YYYY-MM-DD');
       let currentDate = '0000-00-00';
       setTodayCount(0);
@@ -153,9 +155,6 @@ const Home: NextPage = () => {
           return prev;
         });
       });
-
-      // 直近最大5件のトランザクション
-      setRecentTransactions(transactions.slice(0, Math.min(transactions.length, 5)));
     })();
   }, []);
 
@@ -169,7 +168,7 @@ const Home: NextPage = () => {
   const recentTransactionsComponent = () => {
     return (
       <div className="overflow-x-auto">
-        <table className="table w-full">
+        <table className="table table-compact w-full">
           <thead>
             <tr>
               <th>Timestamp</th>
@@ -177,7 +176,7 @@ const Home: NextPage = () => {
           </thead>
 
           <tbody>
-            {recentTransactions.map((tx) => {
+            {transactions.map((tx) => {
               const timestamp = tx.timestamp.format('YYYY-MM-DD HH:mm');
               return (
                 <tr key={tx.hash}>
