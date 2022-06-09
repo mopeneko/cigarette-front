@@ -165,7 +165,7 @@ const Home: NextPage = () => {
     ) / data.length;
   }
 
-  const recentTransactionsComponent = () => {
+  const transactionsComponent = () => {
     return (
       <div className="overflow-x-auto">
         <table className="table table-compact w-full">
@@ -221,9 +221,9 @@ const Home: NextPage = () => {
 
         <div className="card bg-base-300 mt-4">
           <div className="card-body">
-            <h2 className="card-title">Recent Transactions</h2>
+            <h2 className="card-title">Transactions</h2>
             <div className="divider"></div>
-            {recentTransactionsComponent()}
+            {transactionsComponent()}
           </div>
         </div>
       </div>
