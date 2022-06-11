@@ -49,6 +49,9 @@ const Home: NextPage = () => {
     }
   };
   
+  /**
+   * dailySeries - 日次グラフのシリーズ
+   */
   const dailySeries: Series[] = [
     {
       name: "Count",
@@ -56,6 +59,9 @@ const Home: NextPage = () => {
     }
   ];
 
+  /**
+   * perHourOption - 時間毎グラフのオプション
+   */
   const perHourOptions: Options = {
     chart: {
       id: "basic-bar",
@@ -68,6 +74,9 @@ const Home: NextPage = () => {
     }
   };
   
+  /**
+   * perHourSeries - 時間毎グラフのシリーズ
+   */
   const perHourSeries: Series[] = [
     {
       name: "Count",
@@ -75,6 +84,9 @@ const Home: NextPage = () => {
     }
   ];
 
+  /**
+   * loadTransactions - トランザクションの読み込み
+   */
   const loadTransactions = () => {
     (async () => {
       setLoadingCount((prev) => prev + 1);
@@ -172,6 +184,9 @@ const Home: NextPage = () => {
 
   useEffect(loadTransactions, []);
 
+  /**
+   * average - 日次平均の取得
+   */
   const average = () => {
     if (data.length === 0) return 0;
     return data.reduce(
@@ -179,10 +194,16 @@ const Home: NextPage = () => {
     ) / data.length;
   }
 
+  /**
+   * isLoading - ロード中かどうか
+   */
   const isLoading = (): boolean => {
     return loadingCount > 0;
   }
 
+  /**
+   * transactionsComponent - Transactions コンポーネント
+   */
   const transactionsComponent = () => {
     return (
       <div className="overflow-x-auto">
