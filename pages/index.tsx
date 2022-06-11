@@ -209,7 +209,7 @@ const Home: NextPage = () => {
           <button className="btn btn-outline btn-square" onClick={() => loadTransactions()}>
             <Icon path={mdiReload} size={1}></Icon>
           </button>
-          <Link href="//github.com/mopeneko/cigarette-front">
+          <Link href="https://github.com/mopeneko/cigarette-front">
             <button className="btn btn-outline btn-square">
               <Icon path={mdiGithub} size={1}></Icon>
             </button>
