@@ -74,7 +74,7 @@ const Home: NextPage = () => {
     }
   ];
 
-  useEffect(() => {
+  const loadTransactions = () => {
     const transactions: Transaction[] = [];
 
     (async () => {
@@ -161,7 +161,9 @@ const Home: NextPage = () => {
         });
       });
     })();
-  }, []);
+  };
+
+  useEffect(loadTransactions, []);
 
   const average = () => {
     if (data.length === 0) return 0;
@@ -204,7 +206,7 @@ const Home: NextPage = () => {
           </Link>
         </div>
         <div className="flex-none">
-          <button className="btn btn-outline btn-square" onClick={() => window.location.reload()}>
+          <button className="btn btn-outline btn-square" onClick={() => loadTransactions()}>
             <Icon path={mdiReload} size={1}></Icon>
           </button>
         </div>
