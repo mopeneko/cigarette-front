@@ -206,7 +206,7 @@ const Home: NextPage = () => {
           </Link>
         </div>
         <div className="flex-none">
-          <button className="btn btn-outline btn-square" onClick={() => loadTransactions()}>
+          <button className="btn btn-outline btn-square mx-2" onClick={() => loadTransactions()}>
             <Icon path={mdiReload} size={1}></Icon>
           </button>
           <Link href="https://github.com/mopeneko/cigarette-front">
