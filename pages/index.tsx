@@ -1,3 +1,5 @@
+import { mdiReload } from '@mdi/js';
+import Icon from '@mdi/react';
 import dayjs from 'dayjs';
 import type { NextPage } from 'next'
 import dynamic from 'next/dynamic';
@@ -31,6 +33,9 @@ const Home: NextPage = () => {
   const [countPerHour, setCountPerHour] = useState<number[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
+  /**
+   * dailyOptions - 日次グラフのオプション
+   */
   const dailyOptions: Options = {
     chart: {
       id: "basic-bar",
@@ -193,9 +198,16 @@ const Home: NextPage = () => {
   return (
     <>
       <div className="navbar bg-base-100">
-        <Link href="/">
-          <a className="btn btn-ghost normal-case text-xl">cigalette</a>
-        </Link>
+        <div className="flex-1">
+          <Link href="/">
+            <a className="btn btn-ghost normal-case text-xl">cigalette</a>
+          </Link>
+        </div>
+        <div className="flex-none">
+          <button className="btn btn-outline btn-square" onClick={() => window.location.reload()}>
+            <Icon path={mdiReload} size={1}></Icon>
+          </button>
+        </div>
       </div>
 
       <div className="container mx-auto lg:px-64 mt-4">
