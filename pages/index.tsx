@@ -1,4 +1,4 @@
-import { mdiReload } from '@mdi/js';
+import { mdiGithub, mdiReload } from '@mdi/js';
 import Icon from '@mdi/react';
 import dayjs from 'dayjs';
 import type { NextPage } from 'next'
@@ -209,6 +209,11 @@ const Home: NextPage = () => {
           <button className="btn btn-outline btn-square" onClick={() => loadTransactions()}>
             <Icon path={mdiReload} size={1}></Icon>
           </button>
+          <Link href="//github.com/mopeneko/cigarette-front">
+            <button className="btn btn-outline btn-square">
+              <Icon path={mdiGithub} size={1}></Icon>
+            </button>
+          </Link>
         </div>
       </div>
 
