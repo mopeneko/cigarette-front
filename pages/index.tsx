@@ -1,12 +1,19 @@
-import { mdiGithub, mdiLoading, mdiReload } from '@mdi/js';
-import Icon from '@mdi/react';
-import dayjs from 'dayjs';
-import type { NextPage } from 'next'
-import dynamic from 'next/dynamic';
-import Link from 'next/link'
-import { useEffect, useState } from 'react';
-import { Address, MosaicId, Order, RepositoryFactoryHttp, TransactionGroup, TransferTransaction } from 'symbol-sdk';
-const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
+import { mdiGithub, mdiLoading, mdiReload } from "@mdi/js";
+import Icon from "@mdi/react";
+import dayjs from "dayjs";
+import type { NextPage } from "next";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import {
+  Address,
+  MosaicId,
+  Order,
+  RepositoryFactoryHttp,
+  TransactionGroup,
+  TransferTransaction,
+} from "symbol-sdk";
+const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
 interface Transaction {
   hash: string;
@@ -45,20 +52,20 @@ const Home: NextPage = () => {
     },
     xaxis: {
       title: {
-        text: "Counts"
+        text: "Counts",
       },
-      categories: categories
-    }
+      categories: categories,
+    },
   };
-  
+
   /**
    * dailySeries - 日次グラフのシリーズ
    */
   const dailySeries: Series[] = [
     {
       name: "Count",
-      data: data
-    }
+      data: data,
+    },
   ];
 
   /**
@@ -70,20 +77,20 @@ const Home: NextPage = () => {
     },
     xaxis: {
       title: {
-        text: "Counts per hour"
+        text: "Counts per hour",
       },
-      categories: [...Array(24)].map((_, i) => i)
-    }
+      categories: [...Array(24)].map((_, i) => i),
+    },
   };
-  
+
   /**
    * perHourSeries - 時間毎グラフのシリーズ
    */
   const perHourSeries: Series[] = [
     {
       name: "Count",
-      data: countPerHour
-    }
+      data: countPerHour,
+    },
   ];
 
   /**
@@ -91,17 +98,17 @@ const Home: NextPage = () => {
    */
   const heatmapOptions: Options = {
     chart: {
-      id: 'heatmap',
+      id: "heatmap",
     },
     xaxis: {
       title: {
-        text: 'Heatmap',
+        text: "Heatmap",
       },
-      categories: []
+      categories: [],
     },
-  }
+  };
 
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   /**
    * loadTransactions - トランザクションの読み込み
@@ -111,72 +118,89 @@ const Home: NextPage = () => {
       setLoadingCount((prev) => prev + 1);
 
       try {
-        const repositoryFactory = new RepositoryFactoryHttp('https://01.symbol-blockchain.com:3001');
+        const repositoryFactory = new RepositoryFactoryHttp(
+          "https://01.symbol-blockchain.com:3001"
+        );
         const netRepo = repositoryFactory.createNetworkRepository();
         const txRepo = repositoryFactory.createTransactionRepository();
 
         let epockAdjustment = 0;
 
-        await netRepo.
-        getNetworkProperties().
-        forEach((config) => {
+        await netRepo.getNetworkProperties().forEach((config) => {
           if (!config.network.epochAdjustment) {
-            throw new Error('failed to get epockAdjustment');
+            throw new Error("failed to get epockAdjustment");
           }
           epockAdjustment = Number(config.network.epochAdjustment.slice(0, -1));
         });
 
         const transactions: Transaction[] = [];
 
-        await txRepo.search({
-          group: TransactionGroup.Confirmed,
-          address: Address.createFromRawAddress('NDHD4RURCULDJ6EXEJ675MS3QHCMTTFTWFG5IDQ'),
-          transferMosaicId: new MosaicId('606F8854012B0C0F'),
-          pageSize: 100,
-          order: Order.Desc,
-        }).forEach((page) => {
-          page.data.map((data) => {
-            if (!data.transactionInfo) {
-              throw new Error('failed to get transactionInfo');
-            }
+        await txRepo
+          .search({
+            group: TransactionGroup.Confirmed,
+            address: Address.createFromRawAddress(
+              "NDHD4RURCULDJ6EXEJ675MS3QHCMTTFTWFG5IDQ"
+            ),
+            transferMosaicId: new MosaicId("606F8854012B0C0F"),
+            pageSize: 100,
+            order: Order.Desc,
+          })
+          .forEach((page) => {
+            page.data.map((data) => {
+              if (!data.transactionInfo) {
+                throw new Error("failed to get transactionInfo");
+              }
 
-            if (!data.transactionInfo.hash) {
-              throw new Error('failed to get hash');
-            }
+              if (!data.transactionInfo.hash) {
+                throw new Error("failed to get hash");
+              }
 
-            if (!data.transactionInfo.timestamp) {
-              throw new Error('failed to get timestamp');
-            }
+              if (!data.transactionInfo.timestamp) {
+                throw new Error("failed to get timestamp");
+              }
 
-            if (!(data instanceof TransferTransaction)) {
-              return;
-            }
+              if (!(data instanceof TransferTransaction)) {
+                return;
+              }
 
-            if (data.message.payload !== 'cigarette:smoked') {
-              return;
-            }
+              if (data.message.payload !== "cigarette:smoked") {
+                return;
+              }
 
-            transactions.push({
-              hash: data.transactionInfo.hash,
-              timestamp: dayjs(
-                epockAdjustment * 1000 + data.transactionInfo.timestamp.compact()
-              )
+              transactions.push({
+                hash: data.transactionInfo.hash,
+                timestamp: dayjs(
+                  epockAdjustment * 1000 +
+                    data.transactionInfo.timestamp.compact()
+                ),
+              });
             });
           });
-        });
 
-        setTransactions(transactions)
+        setTransactions(transactions);
 
-        const todayDate = dayjs().format('YYYY-MM-DD');
-        let currentDate = '0000-00-00';
+        const todayDate = dayjs().format("YYYY-MM-DD");
+        let currentDate = "0000-00-00";
         setTodayCount(0);
         setCategories([]);
         setData([]);
         setCountPerHour([...Array(24)].map(() => 0));
-        setHeatmapSeries([...Array(24)].map((_, idx): Series => { return { name: (idx + 1).toString(), data: (() => [...Array(7)].map((_, idx) => { return { x: days[idx], y: 0 }}))() }}).reverse());
+        setHeatmapSeries(
+          [...Array(24)]
+            .map((_, idx): Series => {
+              return {
+                name: (idx + 1).toString(),
+                data: (() =>
+                  [...Array(7)].map((_, idx) => {
+                    return { x: days[idx], y: 0 };
+                  }))(),
+              };
+            })
+            .reverse()
+        );
 
         [...transactions].reverse().map((tx) => {
-          const yyyymmdd = tx.timestamp.format('YYYY-MM-DD');
+          const yyyymmdd = tx.timestamp.format("YYYY-MM-DD");
 
           if (yyyymmdd === todayDate) {
             setTodayCount((prev) => prev + 1);
@@ -193,12 +217,12 @@ const Home: NextPage = () => {
           }
 
           setData((prev) => {
-            prev[prev.length-1]++;
+            prev[prev.length - 1]++;
             return prev;
           });
 
           setHeatmapSeries((prev) => {
-            prev[23 - tx.timestamp.hour()].data[tx.timestamp.day()].y++
+            prev[23 - tx.timestamp.hour()].data[tx.timestamp.day()].y++;
             return prev;
           });
         });
@@ -216,17 +240,15 @@ const Home: NextPage = () => {
    */
   const average = () => {
     if (data.length === 0) return 0;
-    return data.reduce(
-      (acc, cur) => acc + cur
-    ) / data.length;
-  }
+    return data.reduce((acc, cur) => acc + cur) / data.length;
+  };
 
   /**
    * isLoading - ロード中かどうか
    */
   const isLoading = (): boolean => {
     return loadingCount > 0;
-  }
+  };
 
   /**
    * transactionsComponent - Transactions コンポーネント
@@ -243,18 +265,18 @@ const Home: NextPage = () => {
 
           <tbody>
             {transactions.map((tx) => {
-              const timestamp = tx.timestamp.format('YYYY-MM-DD HH:mm');
+              const timestamp = tx.timestamp.format("YYYY-MM-DD HH:mm");
               return (
                 <tr key={tx.hash}>
                   <th>{timestamp}</th>
                 </tr>
-              )
+              );
             })}
           </tbody>
         </table>
       </div>
     );
-  }
+  };
 
   return (
     <>
@@ -269,12 +291,19 @@ const Home: NextPage = () => {
             if (isLoading()) {
               return (
                 <button className="btn btn-outline btn-square mx-2">
-                  <Icon className="animate-spin" path={mdiLoading} size={1}></Icon>
+                  <Icon
+                    className="animate-spin"
+                    path={mdiLoading}
+                    size={1}
+                  ></Icon>
                 </button>
               );
             }
             return (
-              <button className="btn btn-outline btn-square mx-2" onClick={() => loadTransactions()}>
+              <button
+                className="btn btn-outline btn-square mx-2"
+                onClick={() => loadTransactions()}
+              >
                 <Icon path={mdiReload} size={1}></Icon>
               </button>
             );
@@ -302,9 +331,21 @@ const Home: NextPage = () => {
             <h2 className="card-title">Graphs</h2>
             <div className="divider"></div>
             <div className="grid xl:grid-cols-2 xl:gap-2">
-              <Chart type="bar" options={dailyOptions} series={dailySeries}></Chart>
-              <Chart type="bar" options={perHourOptions} series={perHourSeries}></Chart>
-              <Chart type="heatmap" options={heatmapOptions} series={heatmapSeries} />
+              <Chart
+                type="bar"
+                options={dailyOptions}
+                series={dailySeries}
+              ></Chart>
+              <Chart
+                type="bar"
+                options={perHourOptions}
+                series={perHourSeries}
+              ></Chart>
+              <Chart
+                type="heatmap"
+                options={heatmapOptions}
+                series={heatmapSeries}
+              />
             </div>
           </div>
         </div>
@@ -318,7 +359,7 @@ const Home: NextPage = () => {
         </div>
       </div>
     </>
-  )
-}
+  );
+};
 
-export default Home
+export default Home;
