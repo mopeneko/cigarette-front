@@ -1,4 +1,4 @@
-import { mdiGithub, mdiReload } from '@mdi/js';
+import { mdiGithub, mdiLoading, mdiReload } from '@mdi/js';
 import Icon from '@mdi/react';
 import dayjs from 'dayjs';
 import type { NextPage } from 'next'
@@ -32,6 +32,7 @@ const Home: NextPage = () => {
   const [categories, setCategories] = useState<string[]>([]);
   const [countPerHour, setCountPerHour] = useState<number[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loadingCount, setLoadingCount] = useState(0);
 
   /**
    * dailyOptions - 日次グラフのオプション
@@ -75,91 +76,97 @@ const Home: NextPage = () => {
   ];
 
   const loadTransactions = () => {
-    const transactions: Transaction[] = [];
-
     (async () => {
-      const repositoryFactory = new RepositoryFactoryHttp('https://01.symbol-blockchain.com:3001');
-      const netRepo = repositoryFactory.createNetworkRepository();
-      const txRepo = repositoryFactory.createTransactionRepository();
+      setLoadingCount((prev) => prev + 1);
 
-      let epockAdjustment = 0;
+      try {
+        const repositoryFactory = new RepositoryFactoryHttp('https://01.symbol-blockchain.com:3001');
+        const netRepo = repositoryFactory.createNetworkRepository();
+        const txRepo = repositoryFactory.createTransactionRepository();
 
-      await netRepo.
-      getNetworkProperties().
-      forEach((config) => {
-        if (!config.network.epochAdjustment) {
-          throw new Error('failed to get epockAdjustment');
-        }
-        epockAdjustment = Number(config.network.epochAdjustment.slice(0, -1));
-      });
+        let epockAdjustment = 0;
 
-      await txRepo.search({
-        group: TransactionGroup.Confirmed,
-        address: Address.createFromRawAddress('NDHD4RURCULDJ6EXEJ675MS3QHCMTTFTWFG5IDQ'),
-        transferMosaicId: new MosaicId('606F8854012B0C0F'),
-        pageSize: 100,
-        order: Order.Desc,
-      }).forEach((page) => {
-        page.data.map((data) => {
-          if (!data.transactionInfo) {
-            throw new Error('failed to get transactionInfo');
+        await netRepo.
+        getNetworkProperties().
+        forEach((config) => {
+          if (!config.network.epochAdjustment) {
+            throw new Error('failed to get epockAdjustment');
           }
+          epockAdjustment = Number(config.network.epochAdjustment.slice(0, -1));
+        });
 
-          if (!data.transactionInfo.hash) {
-            throw new Error('failed to get hash');
-          }
+        const transactions: Transaction[] = [];
 
-          if (!data.transactionInfo.timestamp) {
-            throw new Error('failed to get timestamp');
-          }
+        await txRepo.search({
+          group: TransactionGroup.Confirmed,
+          address: Address.createFromRawAddress('NDHD4RURCULDJ6EXEJ675MS3QHCMTTFTWFG5IDQ'),
+          transferMosaicId: new MosaicId('606F8854012B0C0F'),
+          pageSize: 100,
+          order: Order.Desc,
+        }).forEach((page) => {
+          page.data.map((data) => {
+            if (!data.transactionInfo) {
+              throw new Error('failed to get transactionInfo');
+            }
 
-          if (!(data instanceof TransferTransaction)) {
-            return;
-          }
+            if (!data.transactionInfo.hash) {
+              throw new Error('failed to get hash');
+            }
 
-          if (data.message.payload !== 'cigarette:smoked') {
-            return;
-          }
+            if (!data.transactionInfo.timestamp) {
+              throw new Error('failed to get timestamp');
+            }
 
-          transactions.push({
-            hash: data.transactionInfo.hash,
-            timestamp: dayjs(
-              epockAdjustment * 1000 + data.transactionInfo.timestamp.compact()
-            )
+            if (!(data instanceof TransferTransaction)) {
+              return;
+            }
+
+            if (data.message.payload !== 'cigarette:smoked') {
+              return;
+            }
+
+            transactions.push({
+              hash: data.transactionInfo.hash,
+              timestamp: dayjs(
+                epockAdjustment * 1000 + data.transactionInfo.timestamp.compact()
+              )
+            });
           });
         });
-      });
 
-      setTransactions(transactions)
+        setTransactions(transactions)
 
-      const todayDate = dayjs().format('YYYY-MM-DD');
-      let currentDate = '0000-00-00';
-      setTodayCount(0);
-      setCategories([]);
-      setData([]);
-      setCountPerHour([...Array(24)].map(() => 0));
+        const todayDate = dayjs().format('YYYY-MM-DD');
+        let currentDate = '0000-00-00';
+        setTodayCount(0);
+        setCategories([]);
+        setData([]);
+        setCountPerHour([...Array(24)].map(() => 0));
 
-      [...transactions].reverse().map((tx) => {
-        const yyyymmdd = tx.timestamp.format('YYYY-MM-DD');
+        [...transactions].reverse().map((tx) => {
+          const yyyymmdd = tx.timestamp.format('YYYY-MM-DD');
 
-        if (yyyymmdd === todayDate) {
-          setTodayCount((prev) => prev + 1);
-          setCountPerHour((prev) => {
-            prev[tx.timestamp.hour()]++;
+          if (yyyymmdd === todayDate) {
+            setTodayCount((prev) => prev + 1);
+            setCountPerHour((prev) => {
+              prev[tx.timestamp.hour()]++;
+              return prev;
+            });
+          }
+
+          if (yyyymmdd !== currentDate) {
+            currentDate = yyyymmdd;
+            setCategories((prev) => prev.concat(yyyymmdd));
+            setData((prev) => prev.concat(0));
+          }
+          setData((prev) => {
+            prev[prev.length-1]++;
             return prev;
           });
-        }
-
-        if (yyyymmdd !== currentDate) {
-          currentDate = yyyymmdd;
-          setCategories((prev) => prev.concat(yyyymmdd));
-          setData((prev) => prev.concat(0));
-        }
-        setData((prev) => {
-          prev[prev.length-1]++;
-          return prev;
         });
-      });
+      } finally {
+        setLoadingCount((prev) => prev - 1);
+      }
     })();
   };
 
@@ -170,6 +177,10 @@ const Home: NextPage = () => {
     return data.reduce(
       (acc, cur) => acc + cur
     ) / data.length;
+  }
+
+  const isLoading = (): boolean => {
+    return loadingCount > 0;
   }
 
   const transactionsComponent = () => {
@@ -206,9 +217,20 @@ const Home: NextPage = () => {
           </Link>
         </div>
         <div className="flex-none">
-          <button className="btn btn-outline btn-square mx-2" onClick={() => loadTransactions()}>
-            <Icon path={mdiReload} size={1}></Icon>
-          </button>
+          {(() => {
+            if (isLoading()) {
+              return (
+                <button className="btn btn-outline btn-square mx-2">
+                  <Icon className="animate-spin" path={mdiLoading} size={1}></Icon>
+                </button>
+              );
+            }
+            return (
+              <button className="btn btn-outline btn-square mx-2" onClick={() => loadTransactions()}>
+                <Icon path={mdiReload} size={1}></Icon>
+              </button>
+            );
+          })()}
           <Link href="https://github.com/mopeneko/cigarette-front">
             <button className="btn btn-outline btn-square">
               <Icon path={mdiGithub} size={1}></Icon>
