@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@mdi/js": "^6.7.96",
+    "@mdi/react": "^1.6.0",
     "apexcharts": "^3.35.3",
     "daisyui": "^2.15.2",
     "dayjs": "^1.11.3",
