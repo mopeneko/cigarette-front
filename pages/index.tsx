@@ -19,6 +19,7 @@ interface Options {
     title: Object;
     categories: any[];
   };
+  series?: any[];
 }
 
 interface Series {
@@ -33,6 +34,7 @@ const Home: NextPage = () => {
   const [countPerHour, setCountPerHour] = useState<number[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loadingCount, setLoadingCount] = useState(0);
+  const [heatmapSeries, setHeatmapSeries] = useState<Series[]>([]);
 
   /**
    * dailyOptions - 日次グラフのオプション
@@ -83,6 +85,23 @@ const Home: NextPage = () => {
       data: countPerHour
     }
   ];
+
+  /**
+   * heatmapOptions - heatmap のオプション
+   */
+  const heatmapOptions: Options = {
+    chart: {
+      id: 'heatmap',
+    },
+    xaxis: {
+      title: {
+        text: 'Heatmap',
+      },
+      categories: []
+    },
+  }
+
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   /**
    * loadTransactions - トランザクションの読み込み
@@ -154,6 +173,7 @@ const Home: NextPage = () => {
         setCategories([]);
         setData([]);
         setCountPerHour([...Array(24)].map(() => 0));
+        setHeatmapSeries([...Array(24)].map((_, idx): Series => { return { name: (idx + 1).toString(), data: (() => [...Array(7)].map((_, idx) => { return { x: days[idx], y: 0 }}))() }}).reverse());
 
         [...transactions].reverse().map((tx) => {
           const yyyymmdd = tx.timestamp.format('YYYY-MM-DD');
@@ -171,11 +191,18 @@ const Home: NextPage = () => {
             setCategories((prev) => prev.concat(yyyymmdd));
             setData((prev) => prev.concat(0));
           }
+
           setData((prev) => {
             prev[prev.length-1]++;
             return prev;
           });
+
+          setHeatmapSeries((prev) => {
+            prev[23 - tx.timestamp.hour()].data[tx.timestamp.day()].y++
+            return prev;
+          });
         });
+        console.log(heatmapSeries);
       } finally {
         setLoadingCount((prev) => prev - 1);
       }
@@ -277,6 +304,7 @@ const Home: NextPage = () => {
             <div className="grid xl:grid-cols-2 xl:gap-2">
               <Chart type="bar" options={dailyOptions} series={dailySeries}></Chart>
               <Chart type="bar" options={perHourOptions} series={perHourSeries}></Chart>
+              <Chart type="heatmap" options={heatmapOptions} series={heatmapSeries} />
             </div>
           </div>
         </div>
