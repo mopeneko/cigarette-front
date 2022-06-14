@@ -1,5 +1,6 @@
 import { mdiGithub, mdiLoading, mdiReload } from "@mdi/js";
 import Icon from "@mdi/react";
+import { ApexOptions } from "apexcharts";
 import dayjs from "dayjs";
 import type { NextPage } from "next";
 import dynamic from "next/dynamic";
@@ -20,15 +21,6 @@ interface Transaction {
   timestamp: dayjs.Dayjs;
 }
 
-interface Options {
-  chart: Object;
-  xaxis: {
-    title: Object;
-    categories: any[];
-  };
-  series?: any[];
-}
-
 interface Series {
   name: string;
   data: any[];
@@ -46,7 +38,7 @@ const Home: NextPage = () => {
   /**
    * dailyOptions - 日次グラフのオプション
    */
-  const dailyOptions: Options = {
+  const dailyOptions: ApexOptions = {
     chart: {
       id: "basic-bar",
     },
@@ -71,7 +63,7 @@ const Home: NextPage = () => {
   /**
    * perHourOption - 時間毎グラフのオプション
    */
-  const perHourOptions: Options = {
+  const perHourOptions: ApexOptions = {
     chart: {
       id: "basic-bar",
     },
@@ -96,7 +88,7 @@ const Home: NextPage = () => {
   /**
    * heatmapOptions - heatmap のオプション
    */
-  const heatmapOptions: Options = {
+  const heatmapOptions: ApexOptions = {
     chart: {
       id: "heatmap",
     },
