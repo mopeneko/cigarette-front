@@ -9,9 +9,12 @@ import { useEffect, useState } from "react";
 import {
   Address,
   MosaicId,
+  NetworkRepository,
   Order,
   RepositoryFactoryHttp,
+  Transaction as SymbolTransaction,
   TransactionGroup,
+  TransactionRepository,
   TransferTransaction,
 } from "symbol-sdk";
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
@@ -115,114 +118,147 @@ const Home: NextPage = () => {
         );
         const netRepo = repositoryFactory.createNetworkRepository();
         const txRepo = repositoryFactory.createTransactionRepository();
-
-        let epockAdjustment = 0;
-
-        await netRepo.getNetworkProperties().forEach((config) => {
-          if (!config.network.epochAdjustment) {
-            throw new Error("failed to get epockAdjustment");
-          }
-          epockAdjustment = Number(config.network.epochAdjustment.slice(0, -1));
-        });
-
+        const epochAdjustment = await fetchEpochAdjustment(netRepo);
         const transactions: Transaction[] = [];
-
-        await txRepo
-          .search({
-            group: TransactionGroup.Confirmed,
-            address: Address.createFromRawAddress(
-              "NDHD4RURCULDJ6EXEJ675MS3QHCMTTFTWFG5IDQ"
-            ),
-            transferMosaicId: new MosaicId("606F8854012B0C0F"),
-            pageSize: 100,
-            order: Order.Desc,
-          })
-          .forEach((page) => {
-            page.data.map((data) => {
-              if (!data.transactionInfo) {
-                throw new Error("failed to get transactionInfo");
-              }
-
-              if (!data.transactionInfo.hash) {
-                throw new Error("failed to get hash");
-              }
-
-              if (!data.transactionInfo.timestamp) {
-                throw new Error("failed to get timestamp");
-              }
-
-              if (!(data instanceof TransferTransaction)) {
-                return;
-              }
-
-              if (data.message.payload !== "cigarette:smoked") {
-                return;
-              }
-
-              transactions.push({
-                hash: data.transactionInfo.hash,
-                timestamp: dayjs(
-                  epockAdjustment * 1000 +
-                    data.transactionInfo.timestamp.compact()
-                ),
-              });
-            });
-          });
-
+        await fetchTransactions(txRepo, epochAdjustment)
         setTransactions(transactions);
-
-        const todayDate = dayjs().format("YYYY-MM-DD");
-        let currentDate = "0000-00-00";
-        setTodayCount(0);
-        setCategories([]);
-        setData([]);
-        setCountPerHour([...Array(24)].map(() => 0));
-        setHeatmapSeries(
-          [...Array(24)]
-            .map((_, idx): Series => {
-              return {
-                name: (idx + 1).toString(),
-                data: (() =>
-                  [...Array(7)].map((_, idx) => {
-                    return { x: days[idx], y: 0 };
-                  }))(),
-              };
-            })
-            .reverse()
-        );
-
-        [...transactions].reverse().map((tx) => {
-          const yyyymmdd = tx.timestamp.format("YYYY-MM-DD");
-
-          if (yyyymmdd === todayDate) {
-            setTodayCount((prev) => prev + 1);
-            setCountPerHour((prev) => {
-              prev[tx.timestamp.hour()]++;
-              return prev;
-            });
-          }
-
-          if (yyyymmdd !== currentDate) {
-            currentDate = yyyymmdd;
-            setCategories((prev) => prev.concat(yyyymmdd));
-            setData((prev) => prev.concat(0));
-          }
-
-          setData((prev) => {
-            prev[prev.length - 1]++;
-            return prev;
-          });
-
-          setHeatmapSeries((prev) => {
-            prev[23 - tx.timestamp.hour()].data[tx.timestamp.day()].y++;
-            return prev;
-          });
-        });
-        console.log(heatmapSeries);
+        processTransactions(transactions);
       } finally {
         setLoadingCount((prev) => prev - 1);
       }
     })();
+  };
+
+  const fetchEpochAdjustment = async (
+    netRepo: NetworkRepository
+  ): Promise<number> => {
+    let epochAdjustment = 0;
+
+    await netRepo.getNetworkProperties().forEach((config) => {
+      if (!config.network.epochAdjustment) {
+        throw new Error("failed to get epochAdjustment");
+      }
+
+      epochAdjustment = Number(config.network.epochAdjustment.slice(0, -1));
+    });
+
+    return epochAdjustment;
+  };
+
+  const fetchTransactions = async (
+    txRepo: TransactionRepository,
+    epochAdjustment: number
+  ) => {
+    await txRepo
+      .search({
+        group: TransactionGroup.Confirmed,
+        address: Address.createFromRawAddress(
+          "NDHD4RURCULDJ6EXEJ675MS3QHCMTTFTWFG5IDQ"
+        ),
+        transferMosaicId: new MosaicId("606F8854012B0C0F"),
+        pageSize: 100,
+        order: Order.Desc,
+      })
+      .forEach((page) => {
+        page.data.map((data) => processRawTransaction(data, epochAdjustment));
+      });
+  };
+
+  const processRawTransaction = (data: SymbolTransaction, epochAdjustment: number) => {
+    if (!(data instanceof TransferTransaction) || !validateData(data)) {
+      return;
+    }
+
+    if (!data.transactionInfo || !data.transactionInfo.hash || !data.transactionInfo.timestamp) {
+      return;
+    }
+
+    transactions.push({
+      hash: data.transactionInfo.hash,
+      timestamp: dayjs(
+        epochAdjustment * 1000 + data.transactionInfo.timestamp.compact()
+      ),
+    });
+  }
+
+  const validateData = (data: TransferTransaction): boolean => {
+    if (!data.transactionInfo) {
+      throw new Error("failed to get transactionInfo");
+    }
+
+    if (!data.transactionInfo.hash) {
+      throw new Error("failed to get hash");
+    }
+
+    if (!data.transactionInfo.timestamp) {
+      throw new Error("failed to get timestamp");
+    }
+
+    if (data.message.payload !== "cigarette:smoked") {
+      return false;
+    }
+
+    return true;
+  };
+
+  const processTransactions = (transactions: Transaction[]) => {
+    const todayDate = dayjs().format("YYYY-MM-DD");
+    let currentDate = "0000-00-00";
+    setTodayCount(0);
+    setCategories([]);
+    setData([]);
+    setCountPerHour([...Array(24)].map(() => 0));
+    setHeatmapSeries(
+      [...Array(24)]
+        .map((_, idx): Series => {
+          return {
+            name: (idx + 1).toString(),
+            data: (() =>
+              [...Array(7)].map((_, idx) => {
+                return { x: days[idx], y: 0 };
+              }))(),
+          };
+        })
+        .reverse()
+    );
+
+    [...transactions].reverse().map((tx) => {
+      currentDate = processTransaction(tx, todayDate, currentDate);
+    });
+  };
+
+  const processTransaction = (
+    tx: Transaction,
+    todayDate: string,
+    currentDate: string
+  ): string => {
+    const yyyymmdd = tx.timestamp.format("YYYY-MM-DD");
+
+    if (yyyymmdd === todayDate) {
+      setTodayCount((prev) => prev + 1);
+      setCountPerHour((prev) => {
+        prev[tx.timestamp.hour()]++;
+        return prev;
+      });
+    }
+
+    if (yyyymmdd !== currentDate) {
+      currentDate = yyyymmdd;
+      setCategories((prev) => prev.concat(yyyymmdd));
+      setData((prev) => prev.concat(0));
+    }
+
+    setData((prev) => {
+      prev[prev.length - 1]++;
+      return prev;
+    });
+
+    setHeatmapSeries((prev) => {
+      prev[23 - tx.timestamp.hour()].data[tx.timestamp.day()].y++;
+      return prev;
+    });
+
+    return currentDate;
   };
 
   useEffect(loadTransactions, []);
